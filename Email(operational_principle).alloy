@@ -1,0 +1,89 @@
+sig User {
+	var inbox : set Message
+}
+sig Content {}
+sig Message {
+	from : User,
+	to : User,
+	content : Content
+}
+var sig Undelivered in Message {}
+
+// Specify the following operational principles.
+
+// Assume the existence of the following actions:
+// pred send[f : User, t : User, c : Content] {...}
+// pred receive[t : User, m : Message] {...}
+// pred stutter {...}
+
+// Counter-examples may depict systems that are purposely badly implemented.
+
+
+
+pred op1 {
+	// All messages in the inbox of an user are addressed to that user
+  	all message : Message | all user, destino : User | always (user->message in inbox and message->destino in to implies user=destino)  
+
+}
+
+
+pred op2 {
+	// Undelivered messages cannot be in any inbox
+	all message : Message| all user : User | always (message in Undelivered implies message not in user.inbox)
+}
+
+
+pred op3 {
+	// Any received message must have been sent before
+  	//all message : Message | all user : User | always (receive[user, message] implies before some remetente : User | some content : Content | send[remetente, user, content])
+  
+  all message : Message | all user : User | always ( message in user.inbox implies before send[message.from, message.to, message.content])  
+}
+
+
+pred op4 {
+	// A message in an inbox can never be undelivered again
+  	//all message : Message | all user : User | always (message in Undelivered until user->message in inbox)
+  	all message : Message | all user : User | always (message in user.inbox implies always (message not in Undelivered))
+
+}
+
+
+pred op5 {
+	// If no messages are ever sent there will never be undelivered messages
+  	all message : Message | always not send[message.from, message.to, message.content] implies always message not in Undelivered
+  	//all message : Message | always (no Undelivered until send[message.from, message.to, message.content])
+
+}
+
+
+pred op6 {
+	// After a receive the respective message is no longer undelivered
+  	all message : Message | all user : User | always (receive[user, message] implies after message not in Undelivered)
+
+}
+
+
+pred op7 {
+	// A message that becomes undelivered has never been undelivered before
+	all message : Message | always ((message not in Undelivered; message in Undelivered) implies (historically message not in Undelivered))
+}
+
+
+pred op8 {
+	// If all possible messages have been received nothing else can happen
+  	always (Message = User.inbox implies always stutter)
+
+}
+
+
+pred op9 {
+	// Any received message was undelivered since it was sent
+	all message : Message | all user : User | always(receive[user, message] implies (message in Undelivered) since send[message.from, message.to, message.content]) 
+}
+
+
+pred op10 {
+	// After a send the respective message can only stop being undelivered after being received
+	all message : Message | always(send[message.from, message.to, message.content] implies always (receive[message.to, message] releases message in Undelivered)) 
+}

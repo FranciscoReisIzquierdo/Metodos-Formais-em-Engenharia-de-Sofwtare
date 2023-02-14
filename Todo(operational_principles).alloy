@@ -1,0 +1,66 @@
+sig Task {}
+
+var sig Pending in Task {}
+var sig Done in Task {}
+
+// Specify the following operational principles.
+
+// Assume the existence of the following actions:
+// pred add [t : Task] {...}
+// pred complete [t : Task] {...}
+// pred delete [t : Task] {...}
+// pred stutter {...}
+
+// Counter-examples may depict systems that are purposely badly implemented.
+
+
+pred op1 {
+	// A task cannot be pending and done at the same time
+  	all task : Task | always((task in Pending implies task not in Done) and (task in Done implies task not in Pending))
+
+}
+
+
+pred op2 {
+	// Any done task was once pending
+  	all task : Task | always(task in Done implies once task in Pending)
+
+}
+
+
+pred op3 {
+	// A task can only be pending after being added
+  	 all task : Task | always (task in Pending implies before once add[task])
+
+}
+
+
+pred op4 {
+	// Delete undos add
+  	all task : Task | always((add[task];delete[task]) implies Pending'' = Pending and Done'' = Done)
+
+}
+
+
+pred op5 {
+	// A task that is completed was pending since it was added
+	all task : Task | always(complete[task] implies task in Pending since add[task])
+}
+
+
+pred op6 {
+	// After being completed, a task can only stop being considered done after being deleted
+	all task : Task | always(complete[task] implies after (delete[task] releases task in Done))
+}
+
+
+pred op7 {
+	// After being added, a task can only stop being pending after being completed or deleted
+	all task : Task | always(add[task] implies after ((complete[task] or delete[task]) releases task in Pending))
+}
+
+
+pred op8 {
+	// If all tasks are done the only action that can occur is a delete
+  	always (Task = Done implies (always stutter or (stutter until (some task : Task | delete[task])))) 
+}

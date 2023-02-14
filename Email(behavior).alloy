@@ -1,0 +1,83 @@
+sig User {
+	var inbox : set Message
+}
+sig Content {}
+sig Message {
+	from : User,
+	to : User,
+	content : Content
+}
+var sig Undelivered in Message {}
+
+// Finish the specification of the behavior of the email 
+// concept, trying to ensure the operational principles in 
+// http://alloy4fun.inesctec.pt/RnQaRZEFQhKmnLYcL
+
+pred send[f, t : User, c : Content] {
+	// A message is sent from user f to t with content c
+  	// Guard
+  	f in User
+  	t in User
+  	
+  	some message : Message{
+      	message.to = t
+      	message.from = f
+      	message.content = c
+      	
+      	historically message not in Undelivered
+      	Undelivered' = Undelivered + message
+      	inbox' = inbox
+      }
+  	
+  	// Effect
+  	Content' = Content + c
+  	
+  	// Frame
+  	Message' = Message
+  	User' = User
+
+}
+
+pred receive[t : User, m : Message] {
+	// A sent message m is received by user t
+  	// Guard 
+  	t in User
+  	m not in t.inbox
+  	m in Undelivered
+  	t in m.to
+  	
+  	// Effect
+  	t.inbox' = t.inbox + m
+  	Undelivered' = Undelivered - m
+  
+  	// Frame
+  	Message' = Message
+  	User' = User
+  	Content' = Content
+  	all user : User | user != t implies user.inbox'= user.inbox
+
+}
+
+pred stutter {
+	// Stuttering
+  	User' = User
+  	Message' = Message
+  	Content' = Content
+  	Undelivered'= Undelivered
+  	all user : User | user.inbox'= user.inbox
+
+}
+
+pred behavior {
+	// Initial state
+  	no Undelivered
+  	all user : User | no user.inbox
+
+
+	// Actions
+	always {
+		stutter or 
+		(some t,f : User, c : Content | send[f,t,c]) or
+		(some t : User, m : Message | receive[t,m])
+	}
+}

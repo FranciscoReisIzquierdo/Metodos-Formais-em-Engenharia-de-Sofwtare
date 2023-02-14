@@ -1,0 +1,75 @@
+sig User {
+	follows : set User,
+	sees : set Photo,
+	posts : set Photo,
+	suggested : set User
+}
+
+sig Influencer extends User {}
+
+sig Photo {
+	date : one Day
+}
+sig Ad extends Photo {}
+
+sig Day {}
+
+// Specify the following properties
+// You can check their correctness with the different commands and
+// when specifying each property you can assume all the previous ones to be true
+
+pred inv1 {
+	// Every image is posted be one user
+  all image : univ | (image in Photo) implies (one user : univ | user->image in posts) 
+
+}
+
+
+pred inv2 {
+	// An user cannot follow itself.
+  	all user, follower : univ | (user in User) and (follower in User) and (user->follower in follows) implies (user!=follower) 
+
+}
+
+
+pred inv3 {
+	// An user only sees (non ad) photos posted by followed users. 
+	// Ads can be seen by everyone.
+  	all user, photo : univ | (user in User) and (photo in Photo) and (user->photo in sees) implies (photo in Ad) or
+(all followed : univ | (followed in User) and (followed->photo in posts) implies (user->followed in follows))
+
+}
+
+
+pred inv4 {
+	// If an user posts an ad then all its posts should be labelled as ads 
+	all user : User | all ad : Ad | user->ad in posts implies user.posts in Ad
+}
+
+pred inv5 {
+	// Influencers are followed by everyone else
+  	all influencer, user : univ | influencer in Influencer and user in User and influencer!=user implies influencer in user.follows
+  
+
+}
+
+
+pred inv6 {
+	// Influencers post every day
+  	all influencer, day : univ | influencer in Influencer and day in Day implies some photo : univ | photo->day in date and influencer->photo in posts
+
+}
+
+
+pred inv7 {
+	// Suggested are other users followed by followed users, but not yet followed
+  	//all user, suggest : User | user->suggest in suggested implies some followed : univ | user->followed in follows and followed->suggest in follows and not user->suggest in follows
+  
+  // NÃO PERCEBI O QUE QUER DIZER A AFIRMAÇÃO! ASSUMI QUE FOSSE: SUGGESTED SÃO GAJOS QUE SÃO SEGUIDOS POR GAJOS QUE SÃO SEGUIDOS POR OUTROS MAS ESSES OUTROS NÃO SEGUEM O SUGGESTED... :((((
+}
+
+
+pred inv8 {
+	// An user only sees ads from followed or suggested users
+    all user, ad : univ | user in User and ad in Ad and user->ad in sees implies some followed, suggest : univ | (followed->ad in posts and user->followed in follows) or (suggest->ad in posts and user->suggest in suggested)  
+}

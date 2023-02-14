@@ -1,0 +1,68 @@
+sig Task {}
+
+var sig Pending in Task {}
+var sig Done in Task {}
+
+// Finish the specification of the behavior of the todo 
+// concept, trying to ensure the operational principles in 
+// http://alloy4fun.inesctec.pt/dWD66Kod79MSMRiPh
+
+pred add [t : Task] {
+	// Adding a task to the pending
+  	
+  	// Guard
+  	t not in Done and t not in Pending
+  	
+  	// Effect
+  	Pending' = Pending + t
+  
+  	//Frame
+  	Done' = Done
+
+}
+
+pred complete [t : Task] {
+	// Complete a pending task
+  
+  	// Guard
+  	t in Pending and t not in Done
+  
+  	// Effect
+  	Pending' = Pending - t
+  	Done' = Done + t
+  
+  	// Frame
+  	// Nota: As vars vão sempre alterar nesta ação
+
+}
+
+pred delete [t : Task] {
+	// Delete a task
+  
+  	// Guard
+  	t in Pending + Done
+  
+  	// Effect
+  	Pending' = Pending - t and Done' = Done - t
+  
+  	// Frame
+  	// Nota: As vars vão sempre alterar nesta ação
+
+}
+
+pred stutter {
+	// Stuttering
+  	Done' = Done
+  	Pending' = Pending
+
+}
+
+pred behavior {
+	// Initial state
+	no Pending
+  	no Done 
+
+	// Transitions
+	always (stutter or some t : Task | add[t] or complete[t] or delete[t])
+}
+
